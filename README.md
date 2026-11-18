@@ -36,8 +36,7 @@ Haben die Kinder alle vier Stationen besucht, erscheint die Frage „Was ist in 
 ## Technik
 
 - Eine einzige Seite `index.html` ohne Bibliotheken; das Panorama wird mit WebGL dargestellt.
-- Panorama: `assets/dorf-360.webp` (1774 × 887, equirektangular). Das Bild ist am linken und
-  rechten Rand nicht nahtlos; die Kante hinter den Kakaobäumen wird weich überblendet.
+- Panorama: `assets/dorf-360.webp` (1774 × 887, equirektangular, nahtlos).
 - Positionen der Stationen, des Wegweisers und der Geräuschquellen stehen oben im Skript
   (`STATIONS`, `SRC`) als [Länge, Breite] in Grad.
 - Bedienung: Ziehen (Finger/Maus), Pfeiltasten, Zoomen mit zwei Fingern, dem Mausrad oder +/−.

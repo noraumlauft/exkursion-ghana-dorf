@@ -134,19 +134,19 @@ body,button{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none
    Länge 0 = Bildmitte, +90 = rechts, ±180 = hinten; Breite +90 = oben.
    ============================================================ */
 const PANO="assets/dorf-360.webp";
-const START=[-8,-4];
+const START=[-4,-3];
 const STATIONS=[
-  {id:"brunnen",n:1,title:"Der Brunnen",at:[16.5,-14],audio:"assets/audio/station-1-brunnen.mp3",
+  {id:"brunnen",n:1,title:"Der Brunnen",at:[16,-8],audio:"assets/audio/station-1-brunnen.mp3",
    text:"Wasser gibt es in unserem Dorf nur am Brunnen. Kein Haus hat einen Wasserhahn. Mein Cousin in der Stadt hat zu Hause einen Wasserhahn."},
-  {id:"strasse",n:2,title:"Der Weg ins Nachbardorf",at:[-9,-18],look:[-9,-14],audio:"assets/audio/station-2-strasse.mp3",
+  {id:"strasse",n:2,title:"Der Weg ins Nachbardorf",at:[-11,-10.5],look:[-11,-8],audio:"assets/audio/station-2-strasse.mp3",
    text:"Bei uns fahren keine Schulbusse. Und die Eltern haben keine Zeit, ihre Kinder zur Schule zu fahren. Sie müssen arbeiten."},
-  {id:"feuer",n:3,title:"Die Feuerstelle",at:[-41.5,-12],audio:"assets/audio/station-3-feuerstelle.mp3",
+  {id:"feuer",n:3,title:"Die Feuerstelle",at:[-35,-7],audio:"assets/audio/station-3-feuerstelle.mp3",
    text:"Die meisten Familien kochen mit Holz und Feuer, weil Holz am günstigsten ist. Man kann es sogar selbst sammeln."},
-  {id:"kakao",n:4,title:"Die Kakaobäume",at:[156,2],audio:"assets/audio/station-4-kakaobaeume.mp3",
+  {id:"kakao",n:4,title:"Die Kakaobäume",at:[178,-4],audio:"assets/audio/station-4-kakaobaeume.mp3",
    text:"Mit Kakaobohnen verdient man nicht viel Geld. Deshalb kann meine Familie keine Helfer bezahlen."}
 ];
 // Geräuschquellen im Bild
-const SRC={huehner:-84,feuer:-41.5,brunnen:16.5,wald:150,dorf:-120};
+const SRC={huehner:-48,feuer:-35,brunnen:16,wald:120,dorf:-133};
 
 /* ============================================================ */
 const DEG=Math.PI/180,RAD=180/Math.PI;
@@ -166,8 +166,8 @@ function initGL(img){
     "precision highp float;uniform sampler2D u;uniform mat3 R;uniform vec2 C;uniform float P;"+
     "void main(){vec2 q=(gl_FragCoord.xy-C)/P;vec3 d=normalize(R*vec3(q,1.));"+
     "float lon=atan(d.x,d.z),lat=asin(clamp(d.y,-1.,1.));"+
-    "float x=lon/6.2831853+.5,y=.5-lat/3.1415927,w=.03,s=x<.5?x:x-1.;vec3 c;"+
-    // Das Bild ist an den Rändern nicht nahtlos: dort weich überblenden statt harter Kante
+    "float x=lon/6.2831853+.5,y=.5-lat/3.1415927,w=.004,s=x<.5?x:x-1.;vec3 c;"+
+    // Nahtstelle des Bildes (links/rechts) minimal überblenden, damit keine harte Pixelkante entsteht
     "if(abs(s)<w){float k=(s+w)*.5;c=mix(texture2D(u,vec2(1.-w+k,y)).rgb,texture2D(u,vec2(k,y)).rgb,smoothstep(-w,w,s));}"+
     "else c=texture2D(u,vec2(x,y)).rgb;gl_FragColor=vec4(c,1.);}"));
   gl.linkProgram(prog);gl.useProgram(prog);
