@@ -33,7 +33,7 @@ Haben die Kinder alle vier Stationen besucht, erscheint die Frage „Was ist in 
     stark gedämpft, sodass man keine Wörter versteht),
   - die Handpumpe am Brunnen als echte Aufnahme (`assets/audio/ambient-pumpe.mp3`, ca. 41 Sekunden,
     danach 3 bis 9 Sekunden Pause, dann wieder von vorn). Die Originaldatei liegt in
-    `assets/audio/handpumpe-aufnahme.m4a` („water handpump sound effect, copyright free“);
+    `assets/audio/handpumpe-aufnahme.m4a` („water handpump sound effect“, Lizenz CC0 – gemeinfrei, keine Namensnennung nötig);
     für die Seite wurde sie in Mono umgewandelt, um 8 dB lauter gemacht und an den Enden
     weich ein- und ausgeblendet.
 
