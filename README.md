@@ -50,3 +50,5 @@ Haben die Kinder alle vier Stationen besucht, erscheint die Frage „Was ist in 
   (`STATIONS`, `SRC`) als [Länge, Breite] in Grad.
 - Bedienung: Ziehen (Finger/Maus), Pfeiltasten, Zoomen mit zwei Fingern, dem Mausrad oder +/−.
 - Läuft auf iPad, Tablet, Handy und Computer.
+- Nach dem Austausch eines Bildes oder Tons `python3 tools/update-versions.py` ausführen: Das
+  hängt Versionsnummern an die Dateiadressen, damit Browser nicht die alte Datei aus dem Zwischenspeicher nehmen.

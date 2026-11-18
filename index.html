@@ -133,16 +133,16 @@ body,button{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none
    Inhalte. Position: [Länge, Breite] in Grad im 360°-Bild.
    Länge 0 = Bildmitte, +90 = rechts, ±180 = hinten; Breite +90 = oben.
    ============================================================ */
-const PANO="assets/dorf-360.webp";
+const PANO="assets/dorf-360.webp?v=f68eaf63";
 const START=[-20,-3];
 const STATIONS=[
-  {id:"brunnen",n:1,title:"Der Brunnen",at:[15,-6],audio:"assets/audio/station-1-brunnen.mp3",
+  {id:"brunnen",n:1,title:"Der Brunnen",at:[15,-6],audio:"assets/audio/station-1-brunnen.mp3?v=95b20649",
    text:"Wasser gibt es in unserem Dorf nur am Brunnen. Kein Haus hat einen Wasserhahn. Mein Cousin in der Stadt hat zu Hause einen Wasserhahn."},
-  {id:"strasse",n:2,title:"Der Weg ins Nachbardorf",at:[-3.5,3],look:[-5,-3],audio:"assets/audio/station-2-strasse.mp3",
+  {id:"strasse",n:2,title:"Der Weg ins Nachbardorf",at:[-3.5,3],look:[-5,-3],audio:"assets/audio/station-2-strasse.mp3?v=d2363351",
    text:"Bei uns fahren keine Schulbusse. Und die Eltern haben keine Zeit, ihre Kinder zur Schule zu fahren. Sie müssen arbeiten."},
-  {id:"feuer",n:3,title:"Die Feuerstelle",at:[-59,-8],audio:"assets/audio/station-3-feuerstelle.mp3",
+  {id:"feuer",n:3,title:"Die Feuerstelle",at:[-59,-8],audio:"assets/audio/station-3-feuerstelle.mp3?v=da3a0908",
    text:"Die meisten Familien kochen mit Holz und Feuer, weil Holz am günstigsten ist. Man kann es sogar selbst sammeln."},
-  {id:"kakao",n:4,title:"Die Kakaobäume",at:[178,-4],audio:"assets/audio/station-4-kakaobaeume.mp3",
+  {id:"kakao",n:4,title:"Die Kakaobäume",at:[178,-4],audio:"assets/audio/station-4-kakaobaeume.mp3?v=8b427abe",
    text:"Mit Kakaobohnen verdient man nicht viel Geld. Deshalb kann meine Familie keine Helfer bezahlen."}
 ];
 // Geräuschquellen im Bild
@@ -337,12 +337,12 @@ const sound=(function(){
     ac=new AC();master=ac.createGain();master.gain.value=0;master.connect(ac.destination);
     ambient=ac.createGain();ambient.gain.value=1;ambient.connect(master);
     spot("gespraech",SRC.gespraech,.5);spot("brunnen",SRC.brunnen,.55);spot("wald",SRC.wald,.8);
-    load("gespraech","assets/audio/ambient-gespraech.mp3").then(()=>play("gespraech",positional.gespraech.g,true)).catch(()=>{});
+    load("gespraech","assets/audio/ambient-gespraech.mp3?v=6c8f8ab3").then(()=>play("gespraech",positional.gespraech.g,true)).catch(()=>{});
     every(bird,1500,4500);
     // Handpumpe (echte Aufnahme): ganz abspielen, kurze Pause, dann wieder von vorn
     const pumpLoop=()=>{const src=enabled&&play("pumpe",positional.brunnen.g,false);
       if(src)src.onended=()=>setTimeout(pumpLoop,rand(3000,9000));else setTimeout(pumpLoop,2000)};
-    load("pumpe","assets/audio/ambient-pumpe.mp3").then(()=>setTimeout(pumpLoop,rand(1500,4000))).catch(()=>{});
+    load("pumpe","assets/audio/ambient-pumpe.mp3?v=9261b092").then(()=>setTimeout(pumpLoop,rand(1500,4000))).catch(()=>{});
     every(dove,15000,28000);
     return true;
   }
