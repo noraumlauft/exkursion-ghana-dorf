@@ -36,7 +36,13 @@ Haben die Kinder alle vier Stationen besucht, erscheint die Frage „Was ist in 
 ## Technik
 
 - Eine einzige Seite `index.html` ohne Bibliotheken; das Panorama wird mit WebGL dargestellt.
-- Panorama: `assets/dorf-360.webp` (1774 × 887, equirektangular, nahtlos).
+- Panorama: `assets/dorf-360.webp` (3548 × 1774, equirektangular, nahtlos). Es ist das
+  2× hochskalierte Originalbild `assets/dorf-360-original.webp` (1774 × 887).
+  Hochskaliert wurde mit Real-ESRGAN (Modell `RealESRGAN_x4plus`, Ergebnis auf 2× verkleinert),
+  links und rechts umlaufend aufgefüllt, damit die 360°-Naht erhalten bleibt. Das Skript liegt in
+  `tools/upscale-panorama.py` (benötigt `pip install spandrel` und die Modelldatei von den
+  Real-ESRGAN-Releases auf GitHub). Das Verfahren schärft Kanten und Strukturen, erfindet aber
+  keine neuen Details: Gesichter und Pflanzen werden nicht fotorealistischer.
 - Positionen der Stationen, des Wegweisers und der Geräuschquellen stehen oben im Skript
   (`STATIONS`, `SRC`) als [Länge, Breite] in Grad.
 - Bedienung: Ziehen (Finger/Maus), Pfeiltasten, Zoomen mit zwei Fingern, dem Mausrad oder +/−.
