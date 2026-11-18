@@ -315,7 +315,7 @@ $("bFull").addEventListener("click",()=>{const d=document,el=d.documentElement;
 /* ============================================================
    Dorfgeräusche: leises Vogelgezwitscher (im Browser erzeugt),
    undeutliches Gespräch weniger Menschen und die Handpumpe
-   (Aufnahmen aus tools/generate-ambient.py). Kein Dauerrauschen.
+   (Gespräch aus tools/generate-ambient.py, Pumpe als echte Aufnahme). Kein Dauerrauschen.
    Die Quellen sind im Bild verortet: Wer zum Brunnen schaut,
    hört die Pumpe lauter, bei den Häusern das Gespräch.
    ============================================================ */
@@ -338,9 +338,11 @@ const sound=(function(){
     ambient=ac.createGain();ambient.gain.value=1;ambient.connect(master);
     spot("gespraech",SRC.gespraech,.5);spot("brunnen",SRC.brunnen,.55);spot("wald",SRC.wald,.8);
     load("gespraech","assets/audio/ambient-gespraech.mp3").then(()=>play("gespraech",positional.gespraech.g,true)).catch(()=>{});
-    load("pumpe","assets/audio/ambient-pumpe.mp3").catch(()=>{});
     every(bird,1500,4500);
-    every(()=>play("pumpe",positional.brunnen.g,false),12000,24000);
+    // Handpumpe (echte Aufnahme): ganz abspielen, kurze Pause, dann wieder von vorn
+    const pumpLoop=()=>{const src=enabled&&play("pumpe",positional.brunnen.g,false);
+      if(src)src.onended=()=>setTimeout(pumpLoop,rand(3000,9000));else setTimeout(pumpLoop,2000)};
+    load("pumpe","assets/audio/ambient-pumpe.mp3").then(()=>setTimeout(pumpLoop,rand(1500,4000))).catch(()=>{});
     every(dove,15000,28000);
     return true;
   }

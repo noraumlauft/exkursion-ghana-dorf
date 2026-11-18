@@ -31,10 +31,13 @@ Haben die Kinder alle vier Stationen besucht, erscheint die Frage „Was ist in 
   - leises Vogelgezwitscher in verschiedenen Rufen und gelegentlich eine Taube (im Browser erzeugt),
   - undeutliches Gespräch weniger Menschen bei den Häusern (`assets/audio/ambient-gespraech.mp3`,
     stark gedämpft, sodass man keine Wörter versteht),
-  - die Handpumpe am Brunnen mit Pumpen, leichtem Quietschen und Wasserschwall
-    (`assets/audio/ambient-pumpe.mp3`, ertönt alle 12 bis 24 Sekunden).
+  - die Handpumpe am Brunnen als echte Aufnahme (`assets/audio/ambient-pumpe.mp3`, ca. 41 Sekunden,
+    danach 3 bis 9 Sekunden Pause, dann wieder von vorn). Die Originaldatei liegt in
+    `assets/audio/handpumpe-aufnahme.m4a` („water handpump sound effect, copyright free“);
+    für die Seite wurde sie in Mono umgewandelt, um 8 dB lauter gemacht und an den Enden
+    weich ein- und ausgeblendet.
 
-  Beide Dateien erzeugt `python3 tools/generate-ambient.py`. Die Geräusche kommen aus der
+  Die Gesprächsdatei erzeugt `python3 tools/generate-ambient.py`. Die Geräusche kommen aus der
   passenden Richtung: Schaut man zum Brunnen, hört man die Pumpe lauter. Während eine
   Sprachaufnahme läuft, werden sie leiser. Ein- und Ausschalten geht mit dem Lautsprecher-Knopf
   oben rechts.
