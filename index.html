@@ -146,7 +146,7 @@ const STATIONS=[
    text:"Mit Kakaobohnen verdient man nicht viel Geld. Deshalb kann meine Familie keine Helfer bezahlen."}
 ];
 // Geräuschquellen im Bild
-const SRC={huehner:-50,feuer:-59,brunnen:15,wald:120,dorf:-133};
+const SRC={gespraech:-50,brunnen:15,wald:120};
 
 /* ============================================================ */
 const DEG=Math.PI/180,RAD=180/Math.PI;
@@ -313,95 +313,62 @@ $("bFull").addEventListener("click",()=>{const d=document,el=d.documentElement;
   else{const r=el.requestFullscreen||el.webkitRequestFullscreen;r&&r.call(el)}});
 
 /* ============================================================
-   Dorfgeräusche (live im Browser erzeugt, keine Dateien nötig).
+   Dorfgeräusche: leises Vogelgezwitscher (im Browser erzeugt),
+   undeutliches Gespräch weniger Menschen und die Handpumpe
+   (Aufnahmen aus tools/generate-ambient.py). Kein Dauerrauschen.
    Die Quellen sind im Bild verortet: Wer zum Brunnen schaut,
-   hört das Wasser lauter, an der Feuerstelle knistert es usw.
+   hört die Pumpe lauter, bei den Häusern das Gespräch.
    ============================================================ */
 const sound=(function(){
-  let ac=null,master=null,ambient=null,enabled=true,timers=[],positional={};
-  function noiseBuf(sec,kind){const ln=ac.sampleRate*sec,b=ac.createBuffer(1,ln,ac.sampleRate),d=b.getChannelData(0);let x=0;
-    for(let i=0;i<ln;i++){const w=Math.random()*2-1;if(kind==="brown"){x=(x+.02*w)/1.02;d[i]=x*3.5}else d[i]=w}return b}
-  function src(buf){const n=ac.createBufferSource();n.buffer=buf;n.loop=true;return n}
+  let ac=null,master=null,ambient=null,enabled=true,positional={},buffers={};
   // eine Quelle im Raum: Lautstärke + Stereo abhängig von der Blickrichtung
   function spot(name,lon,base){const g=ac.createGain();g.gain.value=0;const p=ac.createStereoPanner?ac.createStereoPanner():null;
     if(p){g.connect(p);p.connect(ambient)}else g.connect(ambient);positional[name]={g,p,lon,base};return g}
   function steer(y){if(!ac)return;const t=ac.currentTime;
     for(const k in positional){const s=positional[k];let d=((s.lon-y)%360+540)%360-180;
-      const front=Math.max(0,Math.cos(d*DEG)),v=s.base*(.18+.82*Math.pow(front,1.6));
-      s.g.gain.setTargetAtTime(v,t,.25);if(s.p)s.p.pan.setTargetAtTime(clamp(Math.sin(d*DEG)*.85,-1,1),t,.25)}}
-  function every(fn,a,b){const loop=()=>{if(enabled)fn();timers.push(setTimeout(loop,rand(a,b)))};timers.push(setTimeout(loop,rand(a*.3,b*.5)))}
+      const front=Math.max(0,Math.cos(d*DEG)),v=s.base*(.25+.75*Math.pow(front,1.5));
+      s.g.gain.setTargetAtTime(v,t,.25);if(s.p)s.p.pan.setTargetAtTime(clamp(Math.sin(d*DEG)*.8,-1,1),t,.25)}}
+  function every(fn,a,b){const loop=()=>{if(enabled)fn();setTimeout(loop,rand(a,b))};setTimeout(loop,rand(a*.2,b*.4))}
+  function load(name,url){return fetch(url).then(r=>r.arrayBuffer()).then(a=>new Promise((ok,no)=>ac.decodeAudioData(a,ok,no))).then(b=>buffers[name]=b)}
+  function play(name,dst,loop){const b=buffers[name];if(!b)return;const s=ac.createBufferSource();s.buffer=b;s.loop=!!loop;s.connect(dst);
+    s.start(ac.currentTime+.05,loop?Math.random()*b.duration:0);return s}
   function init(){
     const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return false;
     ac=new AC();master=ac.createGain();master.gain.value=0;master.connect(ac.destination);
     ambient=ac.createGain();ambient.gain.value=1;ambient.connect(master);
-    const white=noiseBuf(3,"white"),brown=noiseBuf(4,"brown");
-    // Wind in den Blättern
-    {const n=src(brown),f=ac.createBiquadFilter();f.type="bandpass";f.frequency.value=700;f.Q.value=.35;const g=ac.createGain();g.gain.value=.22;
-     const l=ac.createOscillator();l.frequency.value=.06;const lg=ac.createGain();lg.gain.value=.14;l.connect(lg);lg.connect(g.gain);l.start();
-     n.connect(f);f.connect(g);g.connect(ambient);n.start()}
-    // Zikaden / Insekten (leise, flirrend)
-    {const n=src(white),f=ac.createBiquadFilter();f.type="bandpass";f.frequency.value=5200;f.Q.value=6;const g=ac.createGain();g.gain.value=0;
-     const am=ac.createOscillator();am.frequency.value=38;const ag=ac.createGain();ag.gain.value=.018;am.connect(ag);ag.connect(g.gain);am.start();
-     const sw=ac.createOscillator();sw.frequency.value=.11;const sg=ac.createGain();sg.gain.value=.012;sw.connect(sg);sg.connect(g.gain);sw.start();
-     n.connect(f);f.connect(g);g.connect(spot("wald",SRC.wald,1));n.start()}
-    // Wasser am Brunnen (plätschernder Strahl)
-    {const n=src(white),f=ac.createBiquadFilter();f.type="bandpass";f.frequency.value=1800;f.Q.value=.8;
-     const f2=ac.createBiquadFilter();f2.type="lowpass";f2.frequency.value=4200;const g=ac.createGain();g.gain.value=.05;
-     const fl=ac.createOscillator();fl.frequency.value=7;const fg=ac.createGain();fg.gain.value=.025;fl.connect(fg);fg.connect(g.gain);fl.start();
-     n.connect(f);f.connect(f2);f2.connect(g);g.connect(spot("brunnen",SRC.brunnen,1));n.start()}
-    // Feuer: Grundrauschen
-    {const n=src(brown),f=ac.createBiquadFilter();f.type="lowpass";f.frequency.value=420;const g=ac.createGain();g.gain.value=.16;
-     n.connect(f);f.connect(g);g.connect(spot("feuer",SRC.feuer,1));n.start()}
-    spot("huehner",SRC.huehner,1);spot("dorf",SRC.dorf,1);
-    // wiederkehrende Ereignisse
-    every(bird,1800,5200);
-    every(()=>{for(let i=0,n=3+(Math.random()*8|0);i<n;i++)crackle(ac.currentTime+rand(0,.9))},500,1300);
-    every(hen,3500,9000);
-    every(pump,6000,11000);
-    every(dove,14000,26000);
-    every(hammer,16000,30000);
+    spot("gespraech",SRC.gespraech,.5);spot("brunnen",SRC.brunnen,.55);spot("wald",SRC.wald,.8);
+    load("gespraech","assets/audio/ambient-gespraech.mp3").then(()=>play("gespraech",positional.gespraech.g,true)).catch(()=>{});
+    load("pumpe","assets/audio/ambient-pumpe.mp3").catch(()=>{});
+    every(bird,1500,4500);
+    every(()=>play("pumpe",positional.brunnen.g,false),12000,24000);
+    every(dove,15000,28000);
     return true;
   }
   const env=(g,t,peak,a,d)=>{g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.exponentialRampToValueAtTime(.0001,t+a+d)};
-  function bird(){const t0=ac.currentTime+.05,g=ac.createGain(),p=ac.createStereoPanner?ac.createStereoPanner():null;
-    if(p){p.pan.value=rand(-.9,.9);g.connect(p);p.connect(ambient)}else g.connect(ambient);
-    const type=Math.random(),n=2+(Math.random()*5|0),f0=rand(2200,3800);
-    for(let i=0;i<n;i++){const o=ac.createOscillator(),og=ac.createGain();o.type="sine";const ts=t0+i*rand(.1,.19);
-      if(type<.5){o.frequency.setValueAtTime(f0,ts);o.frequency.exponentialRampToValueAtTime(f0*rand(1.2,1.5),ts+.05);o.frequency.exponentialRampToValueAtTime(f0*.8,ts+.11)}
-      else{o.frequency.setValueAtTime(f0*1.3,ts);o.frequency.exponentialRampToValueAtTime(f0*.7,ts+.09)}
-      o.connect(og);og.connect(g);env(og,ts,.035,.015,.11);o.start(ts);o.stop(ts+.16)}
-    g.gain.value=1}
+  function tone(dst,ts,f0,f1,f2,dur,peak){const o=ac.createOscillator(),g=ac.createGain();o.type="sine";
+    o.frequency.setValueAtTime(f0,ts);o.frequency.exponentialRampToValueAtTime(f1,ts+dur*.45);o.frequency.exponentialRampToValueAtTime(f2,ts+dur);
+    o.connect(g);g.connect(dst);env(g,ts,peak,Math.min(.02,dur*.3),dur);o.start(ts);o.stop(ts+dur+.05)}
+  // verschiedene kleine Vogelrufe, zufällig im Raum verteilt, manche weiter weg (dumpfer)
+  function bird(){const t0=ac.currentTime+.05,g=ac.createGain(),p=ac.createStereoPanner?ac.createStereoPanner():null,lp=ac.createBiquadFilter();
+    const far=Math.random()<.45;lp.type="lowpass";lp.frequency.value=far?3200:9000;g.gain.value=far?.45:1;
+    lp.connect(g);if(p){p.pan.value=rand(-.95,.95);g.connect(p);p.connect(ambient)}else g.connect(ambient);
+    const kind=Math.random(),f=rand(2400,4200),v=.022;
+    if(kind<.35){ // schnelles Zwitschern
+      for(let i=0,n=3+(Math.random()*6|0);i<n;i++){const ts=t0+i*rand(.07,.12);tone(lp,ts,f,f*rand(1.15,1.4),f*.85,.07,v)}}
+    else if(kind<.6){ // zweitoniges Pfeifen „tü-lii“
+      tone(lp,t0,f*.75,f*.78,f*.72,.18,v);tone(lp,t0+.24,f*.95,f*1.1,f*1.05,.22,v)}
+    else if(kind<.85){ // absteigender Triller
+      for(let i=0,n=5+(Math.random()*5|0);i<n;i++){const ts=t0+i*.055,ff=f*(1.3-i*.05);tone(lp,ts,ff,ff*1.1,ff*.9,.045,v*.85)}}
+    else{ // kurzes Tschilpen
+      for(let i=0;i<2;i++)tone(lp,t0+i*.15,f*1.2,f*.8,f*.7,.06,v)}}
   function dove(){const t0=ac.currentTime+.05,dst=positional.wald.g;
     [0,.55,.85,1.4].forEach((dt,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.type="sine";const ts=t0+dt,f=i===1?560:500;
       o.frequency.setValueAtTime(f*.92,ts);o.frequency.linearRampToValueAtTime(f,ts+.12);o.frequency.linearRampToValueAtTime(f*.9,ts+.32);
-      o.connect(g);g.connect(dst);env(g,ts,.05,.06,.3);o.start(ts);o.stop(ts+.45)})}
-  function crackle(ts){const n=ac.createBufferSource();n.buffer=crackle.b||(crackle.b=noiseBuf(.05,"white"));
-    const f=ac.createBiquadFilter();f.type="highpass";f.frequency.value=rand(1500,4000);const g=ac.createGain();
-    n.connect(f);f.connect(g);g.connect(positional.feuer.g);env(g,ts,rand(.15,.5),.001,rand(.01,.04));n.start(ts);n.stop(ts+.06)}
-  function hen(){const t0=ac.currentTime+.05,n=2+(Math.random()*4|0),dst=positional.huehner.g;
-    for(let i=0;i<n;i++){const last=i===n-1&&Math.random()<.5,ts=t0+i*rand(.16,.26),dur=last?.38:.09;
-      const o=ac.createOscillator();o.type="sawtooth";const f0=last?rand(520,620):rand(330,430);
-      o.frequency.setValueAtTime(f0,ts);if(last){o.frequency.linearRampToValueAtTime(f0*1.45,ts+.12);o.frequency.linearRampToValueAtTime(f0*1.1,ts+dur)}else o.frequency.exponentialRampToValueAtTime(f0*.75,ts+dur);
-      const bp=ac.createBiquadFilter();bp.type="bandpass";bp.frequency.value=1300;bp.Q.value=2.5;
-      const bp2=ac.createBiquadFilter();bp2.type="bandpass";bp2.frequency.value=2600;bp2.Q.value=3;
-      const g=ac.createGain();o.connect(bp);o.connect(bp2);bp.connect(g);bp2.connect(g);g.connect(dst);
-      env(g,ts,last?.11:.14,.008,dur);o.start(ts);o.stop(ts+dur+.05)}}
-  function pump(){const t0=ac.currentTime+.05,n=3+(Math.random()*3|0),dst=positional.brunnen.g;
-    for(let i=0;i<n;i++){const ts=t0+i*.75;
-      // Quietschen des Pumpenschwengels
-      const o=ac.createOscillator();o.type="triangle";const f=rand(950,1250);o.frequency.setValueAtTime(f,ts);o.frequency.linearRampToValueAtTime(f*1.18,ts+.22);
-      const g=ac.createGain();o.connect(g);g.connect(dst);env(g,ts,.025,.04,.22);o.start(ts);o.stop(ts+.3);
-      // Wasserschwall
-      const w=ac.createBufferSource();w.buffer=pump.b||(pump.b=noiseBuf(.6,"white"));const bp=ac.createBiquadFilter();bp.type="bandpass";bp.frequency.value=rand(900,1400);bp.Q.value=1.2;
-      const wg=ac.createGain();w.connect(bp);bp.connect(wg);wg.connect(dst);env(wg,ts+.3,.12,.05,.35);w.start(ts+.3);w.stop(ts+.8)}}
-  function hammer(){const t0=ac.currentTime+.1,dst=positional.dorf.g;
-    for(let i=0,n=3+(Math.random()*4|0);i<n;i++){const ts=t0+i*rand(.45,.6),o=ac.createOscillator();o.type="square";o.frequency.setValueAtTime(rand(180,220),ts);
-      const lp=ac.createBiquadFilter();lp.type="lowpass";lp.frequency.value=900;const g=ac.createGain();o.connect(lp);lp.connect(g);g.connect(dst);
-      env(g,ts,.06,.002,.08);o.start(ts);o.stop(ts+.12)}}
+      o.connect(g);g.connect(dst);env(g,ts,.04,.06,.3);o.start(ts);o.stop(ts+.45)})}
   return{
-    start(){if(!ac&&!init())return;ac.resume&&ac.resume();if(enabled)master.gain.setTargetAtTime(.5,ac.currentTime,.8);steer(yaw)},
-    enable(on){enabled=on;if(!ac){if(on)this.start();return}master.gain.setTargetAtTime(on?.5:0,ac.currentTime,.3)},
-    duck(on){if(ac)ambient.gain.setTargetAtTime(on?.28:1,ac.currentTime,.25)},
+    start(){if(!ac&&!init())return;ac.resume&&ac.resume();if(enabled)master.gain.setTargetAtTime(.6,ac.currentTime,.8);steer(yaw)},
+    enable(on){enabled=on;if(!ac){if(on)this.start();return}master.gain.setTargetAtTime(on?.6:0,ac.currentTime,.3)},
+    duck(on){if(ac)ambient.gain.setTargetAtTime(on?.25:1,ac.currentTime,.25)},
     steer
   };
 })();

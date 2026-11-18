@@ -1,15 +1,27 @@
 {
-  "voice": "de-DE-KatjaNeural",
-  "rate": "-5%",
-  "pitch": "+0Hz",
+  "voice": "de-DE-AmalaNeural",
+  "rate": "-8%",
+  "pitch": "+28Hz",
   "clips": [
-    {"id": "brunnen", "file": "station-1-brunnen.mp3",
-     "text": "Wasser gibt es in unserem Dorf nur am Brunnen. Kein Haus hat einen Wasserhahn. Mein Cousin in der Stadt hat zu Hause einen Wasserhahn."},
-    {"id": "strasse", "file": "station-2-strasse.mp3",
-     "text": "Bei uns fahren keine Schulbusse. Und die Eltern haben keine Zeit, ihre Kinder zur Schule zu fahren. Sie müssen arbeiten."},
-    {"id": "feuer", "file": "station-3-feuerstelle.mp3",
-     "text": "Die meisten Familien kochen mit Holz und Feuer, weil Holz am günstigsten ist. Man kann es sogar selbst sammeln."},
-    {"id": "kakao", "file": "station-4-kakaobaeume.mp3",
-     "text": "Mit Kakaobohnen verdient man nicht viel Geld. Deshalb kann meine Familie keine Helfer bezahlen."}
+    {
+      "id": "brunnen",
+      "file": "station-1-brunnen.mp3",
+      "text": "Wasser gibt es in unserem Dorf nur am Brunnen. Kein Haus hat einen Wasserhahn. Mein Cousin in der Stadt hat zu Hause einen Wasserhahn."
+    },
+    {
+      "id": "strasse",
+      "file": "station-2-strasse.mp3",
+      "text": "Bei uns fahren keine Schulbusse. Und die Eltern haben keine Zeit, ihre Kinder zur Schule zu fahren. Sie müssen arbeiten."
+    },
+    {
+      "id": "feuer",
+      "file": "station-3-feuerstelle.mp3",
+      "text": "Die meisten Familien kochen mit Holz und Feuer, weil Holz am günstigsten ist. Man kann es sogar selbst sammeln."
+    },
+    {
+      "id": "kakao",
+      "file": "station-4-kakaobaeume.mp3",
+      "text": "Mit Kakaobohnen verdient man nicht viel Geld. Deshalb kann meine Familie keine Helfer bezahlen."
+    }
   ]
 }
