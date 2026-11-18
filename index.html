@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ein Dorf in Ghana</title>
+<meta name="description" content="Virtuelle 360°-Exkursion in ein Dorf in Ghana – vier Stationen mit Text und Ton, für die Grundschule.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Baloo+2:wght@600;800&display=swap">
+<style>
+:root{--ink:#2b1d12;--cream:#fff8ec;--cocoa:#6b3f22;--leaf:#3f6b2a;--gold:#e0a526;--clay:#b5552b}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0;height:100%;overflow:hidden;background:#2a2016;font-family:Andika,system-ui,sans-serif;color:var(--ink);-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+body,button{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#view{position:fixed;inset:0;overflow:hidden;touch-action:none;cursor:grab}
+#view.drag{cursor:grabbing}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+#vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,rgba(0,0,0,0) 55%,rgba(20,10,4,.35) 100%)}
+#layer{position:absolute;inset:0;pointer-events:none}
+
+/* Stationen */
+.st{position:absolute;left:0;top:0;pointer-events:auto;border:0;padding:0;background:none;cursor:pointer;will-change:transform;font-family:Andika,sans-serif}
+.st .ring{position:absolute;left:-28px;top:-28px;width:56px;height:56px;border-radius:50%;border:4px solid #fff;background:rgba(224,165,38,.95);color:#fff;font:800 26px/48px "Baloo 2",sans-serif;text-align:center;box-shadow:0 3px 14px rgba(0,0,0,.5)}
+.st .ring::after{content:"";position:absolute;inset:-12px;border-radius:50%;border:3px solid rgba(255,255,255,.8);animation:pulse 2.2s ease-out infinite}
+.st .name{position:absolute;left:0;top:36px;transform:translateX(-50%);white-space:nowrap;background:rgba(255,248,236,.95);color:var(--cocoa);border-radius:12px;padding:3px 11px 4px;font:800 17px/1.2 "Baloo 2",sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.35)}
+.st.seen .ring{background:rgba(63,107,42,.95)}
+.st.seen .ring::after{animation:none;border-color:transparent}
+.st.active .ring{transform:scale(1.15)}
+.st:focus-visible .ring{outline:3px solid #fff;outline-offset:6px}
+@keyframes pulse{0%{transform:scale(.8);opacity:1}100%{transform:scale(1.45);opacity:0}}
+.nolabels .st .name{display:none}
+
+/* Wegweiser (steht im Bild an der Straße) */
+#sign{position:absolute;left:0;top:0;width:150px;height:170px;margin-left:-75px;margin-top:-170px;transform-origin:50% 100%;pointer-events:auto;cursor:pointer;will-change:transform;border:0;padding:0;background:none}
+#sign svg{width:100%;height:100%;display:block;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45))}
+
+/* Kopfzeile, Werkzeuge */
+.chip{position:absolute;background:rgba(255,248,236,.94);border-radius:16px;box-shadow:0 3px 14px rgba(0,0,0,.3)}
+#top{left:max(12px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));padding:8px 14px 9px;z-index:4}
+#top h1{margin:0;font:800 19px/1.1 "Baloo 2",sans-serif;color:var(--cocoa)}
+#top .sub{font-size:13px;margin-top:3px;display:flex;align-items:center;gap:8px}
+#dots{display:flex;gap:5px}#dots i{width:11px;height:11px;border-radius:50%;background:#d9cbb4}#dots i.on{background:var(--leaf)}
+#tools{right:max(12px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top));display:flex;gap:6px;padding:6px;z-index:4}
+.tb{border:0;background:transparent;border-radius:11px;width:42px;height:42px;display:grid;place-items:center;cursor:pointer;color:var(--cocoa)}
+.tb:hover{background:#f1e4cf}.tb[aria-pressed=true]{background:var(--cocoa);color:#fff}
+.tb svg{width:24px;height:24px}
+#hint{left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);padding:10px 16px;font-size:17px;display:flex;align-items:center;gap:10px;white-space:nowrap;transition:opacity .6s;z-index:3}
+#hint svg{width:30px;height:30px;animation:sway 1.8s ease-in-out infinite;flex:none}
+@keyframes sway{0%,100%{transform:translateX(-7px)}50%{transform:translateX(7px)}}
+
+/* Stationstext */
+#sheet{left:50%;bottom:max(14px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(600px,calc(100% - 24px));padding:16px 18px 14px;z-index:5;display:flex;gap:14px;align-items:flex-start}
+#sheet .num{flex:none;width:46px;height:46px;border-radius:50%;background:var(--gold);color:#fff;font:800 24px/46px "Baloo 2",sans-serif;text-align:center;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+#sheet .body{flex:1;min-width:0}
+#sheet h2{margin:0 0 6px;font:800 22px/1.15 "Baloo 2",sans-serif;color:var(--cocoa)}
+#sheet p{margin:0 0 12px;font-size:20px;line-height:1.5}
+#sheet p.talking{color:#1a1108}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:0;border-radius:12px;padding:9px 16px;font:700 16px Andika,sans-serif;cursor:pointer;background:#f1e4cf;color:var(--cocoa);display:inline-flex;align-items:center;gap:6px}
+.btn.main{background:var(--cocoa);color:#fff}
+.btn svg{width:20px;height:20px}
+.eq{display:inline-flex;gap:2px;align-items:flex-end;height:16px;width:18px}
+.eq i{width:4px;background:currentColor;border-radius:2px;height:30%}
+.playing .eq i{animation:eq .7s ease-in-out infinite alternate}
+.playing .eq i:nth-child(2){animation-delay:-.25s}.playing .eq i:nth-child(3){animation-delay:-.5s}
+@keyframes eq{from{height:20%}to{height:100%}}
+
+#toast{left:50%;top:max(72px,calc(env(safe-area-inset-top) + 64px));transform:translateX(-50%);padding:12px 18px;font-weight:700;color:var(--leaf);font-size:18px;text-align:center;z-index:6;max-width:calc(100% - 24px)}
+
+/* Startbildschirm */
+#start{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 40%,#8a4a24 0%,#3a2213 75%);z-index:10;padding:20px}
+#start .card{background:var(--cream);border-radius:22px;padding:26px 26px 22px;max-width:480px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.45);text-align:center}
+#start h1{margin:0 0 4px;font:800 32px/1.1 "Baloo 2",sans-serif;color:var(--cocoa)}
+#start p{font-size:19px;line-height:1.45;margin:10px 0 18px}
+#start .badge{width:72px;height:72px;margin:0 auto 6px;display:block}
+#bar{height:10px;border-radius:5px;background:#eadcc4;overflow:hidden;margin:6px 0 8px}
+#bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--clay),var(--gold));transition:width .2s}
+#status{font-size:14px;color:#7a6650;min-height:20px}
+#go{font-size:21px;padding:13px 30px;margin-top:8px}
+#go[disabled]{opacity:.45;cursor:default}
+
+@media (max-width:600px){
+ #top h1{font-size:16px}#top{padding:6px 10px 7px}#bFull{display:none}.tb{width:38px;height:38px}
+ #sheet{padding:12px 12px 10px;gap:10px}#sheet .num{width:38px;height:38px;font-size:20px;line-height:38px}
+ #sheet h2{font-size:19px}#sheet p{font-size:18px}
+ .st .name{font-size:15px}#hint{font-size:15px}
+}
+@media (prefers-reduced-motion:reduce){.st .ring::after,#hint svg,.playing .eq i{animation:none}}
+</style>
+</head>
+<body>
+<div id="view" tabindex="0" aria-label="360-Grad-Ansicht eines Dorfes in Ghana. Mit Ziehen oder den Pfeiltasten umschauen.">
+  <canvas id="gl"></canvas>
+  <div id="vignette"></div>
+  <div id="layer">
+    <button id="sign" aria-label="Wegweiser: Nachbardorf">
+      <svg viewBox="0 0 150 170" aria-hidden="true">
+        <rect x="68" y="30" width="12" height="140" rx="3" fill="#6b4425"/>
+        <rect x="68" y="30" width="4" height="140" fill="#83562f"/>
+        <path d="M8 22h112l22 19-22 19H8z" fill="#c98b4a" stroke="#5a3519" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M14 30h100M14 52h100" stroke="#b07436" stroke-width="2" opacity=".6"/>
+        <circle cx="74" cy="41" r="2.4" fill="#4a2a12"/>
+        <text x="64" y="47" text-anchor="middle" font-family="Baloo 2, Andika, sans-serif" font-weight="800" font-size="17" fill="#3a1f0c">Nachbardorf</text>
+        <text x="64" y="74" text-anchor="middle" font-family="Andika, sans-serif" font-weight="700" font-size="13" fill="#fff8ec" stroke="#3a1f0c" stroke-width="3" paint-order="stroke">5 km</text>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<div id="top" class="chip"><h1>Ein Dorf in Ghana</h1><div class="sub"><span id="count">0 von 4 Stationen</span><span id="dots"><i></i><i></i><i></i><i></i></span></div></div>
+<div id="tools" class="chip">
+  <button class="tb" id="bSound" aria-pressed="true" title="Dorfgeräusche an/aus" aria-label="Dorfgeräusche an oder aus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg></button>
+  <button class="tb" id="bLabels" aria-pressed="true" title="Namen der Stationen zeigen" aria-label="Namen der Stationen zeigen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v10H9l-5 4z"/><path d="M8 10h8M8 13h5"/></svg></button>
+  <button class="tb" id="bFull" title="Vollbild" aria-label="Vollbild"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+</div>
+<div id="hint" class="chip" hidden><svg viewBox="0 0 32 32" fill="none" stroke="#6b3f22" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17V7a2 2 0 0 1 4 0v8l6 1.2a2.5 2.5 0 0 1 2 2.8L23 26H13l-4.5-6a2 2 0 0 1 3-2.6z"/></svg><span>Ziehe mit dem Finger und schau dich um!</span></div>
+<div id="toast" class="chip" hidden></div>
+
+<div id="sheet" class="chip" hidden role="dialog" aria-live="polite" aria-labelledby="sTitle">
+  <div class="num" id="sNum">1</div>
+  <div class="body">
+    <h2 id="sTitle"></h2>
+    <p id="sText"></p>
+    <div class="row">
+      <button class="btn" id="sPlay"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span id="sPlayLbl">Nochmal hören</span></button>
+      <button class="btn main" id="sClose">Weiter umschauen</button>
+    </div>
+  </div>
+</div>
+
+<div id="start">
+  <div class="card">
+    <svg class="badge" viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="35" fill="#f1e4cf"/><path d="M14 40l22-16 22 16" fill="none" stroke="#8a4a24" stroke-width="4" stroke-linejoin="round"/><rect x="19" y="38" width="34" height="20" rx="2" fill="#c9784a"/><rect x="32" y="45" width="8" height="13" fill="#6b3f22"/><path d="M11 41l25-18 25 18" fill="none" stroke="#9aa3ab" stroke-width="5" stroke-linejoin="round"/><circle cx="55" cy="18" r="6" fill="#e0a526"/></svg>
+    <h1>Ein Dorf in Ghana</h1>
+    <p>Du besuchst ein Dorf in Ghana. Schau dich überall um und finde die <b>4&nbsp;Stationen</b>. Tippe darauf und hör zu!</p>
+    <div id="bar"><i></i></div>
+    <div id="status">Das Bild wird geladen …</div>
+    <button class="btn main" id="go" disabled>Los geht's! 🔊</button>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+/* ============================================================
+   Inhalte. Position: [Länge, Breite] in Grad im 360°-Bild.
+   Länge 0 = Bildmitte, +90 = rechts, ±180 = hinten; Breite +90 = oben.
+   ============================================================ */
+const PANO="assets/dorf-360.webp";
+const START=[-8,-4];
+const STATIONS=[
+  {id:"brunnen",n:1,title:"Der Brunnen",at:[16.5,-14],audio:"assets/audio/station-1-brunnen.mp3",
+   text:"Wasser gibt es in unserem Dorf nur am Brunnen. Kein Haus hat einen Wasserhahn. Mein Cousin in der Stadt hat zu Hause einen Wasserhahn."},
+  {id:"strasse",n:2,title:"Die Straße ins Nachbardorf",at:[110,-20],look:[110,-17],audio:"assets/audio/station-2-strasse.mp3",
+   text:"Bei uns fahren keine Schulbusse. Und die Eltern haben keine Zeit, ihre Kinder zur Schule zu fahren. Sie müssen arbeiten."},
+  {id:"feuer",n:3,title:"Die Feuerstelle",at:[-41.5,-12],audio:"assets/audio/station-3-feuerstelle.mp3",
+   text:"Die meisten Familien kochen mit Holz und Feuer, weil Holz am günstigsten ist. Man kann es sogar selbst sammeln."},
+  {id:"kakao",n:4,title:"Die Kakaobäume",at:[156,2],audio:"assets/audio/station-4-kakaobaeume.mp3",
+   text:"Mit Kakaobohnen verdient man nicht viel Geld. Deshalb kann meine Familie keine Helfer bezahlen."}
+];
+const SIGN={at:[110,-15],h:20}; // Fußpunkt des Wegweisers, Höhe in Grad bei normalem Zoom
+// Geräuschquellen im Bild
+const SRC={huehner:-84,feuer:-41.5,brunnen:16.5,wald:150,dorf:-120};
+
+/* ============================================================ */
+const DEG=Math.PI/180,RAD=180/Math.PI;
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const rand=(a,b)=>a+(b-a)*Math.random();
+const $=id=>document.getElementById(id);
+
+/* ---------- WebGL-Panorama ---------- */
+const view=$("view"),gcv=$("gl");
+const gl=gcv.getContext("webgl",{antialias:false,alpha:false})||gcv.getContext("experimental-webgl");
+let uR,uC,uP,texReady=false;
+function initGL(img){
+  const sh=(t,src)=>{const o=gl.createShader(t);gl.shaderSource(o,src);gl.compileShader(o);return o};
+  const prog=gl.createProgram();
+  gl.attachShader(prog,sh(gl.VERTEX_SHADER,"attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}"));
+  gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,
+    "precision highp float;uniform sampler2D u;uniform mat3 R;uniform vec2 C;uniform float P;"+
+    "void main(){vec2 q=(gl_FragCoord.xy-C)/P;vec3 d=normalize(R*vec3(q,1.));"+
+    "float lon=atan(d.x,d.z),lat=asin(clamp(d.y,-1.,1.));"+
+    "float x=lon/6.2831853+.5,y=.5-lat/3.1415927,w=.03,s=x<.5?x:x-1.;vec3 c;"+
+    // Das Bild ist an den Rändern nicht nahtlos: dort weich überblenden statt harter Kante
+    "if(abs(s)<w){float k=(s+w)*.5;c=mix(texture2D(u,vec2(1.-w+k,y)).rgb,texture2D(u,vec2(k,y)).rgb,smoothstep(-w,w,s));}"+
+    "else c=texture2D(u,vec2(x,y)).rgb;gl_FragColor=vec4(c,1.);}"));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+  const loc=gl.getAttribLocation(prog,"p");gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  uR=gl.getUniformLocation(prog,"R");uC=gl.getUniformLocation(prog,"C");uP=gl.getUniformLocation(prog,"P");
+  let src=img;const mx=gl.getParameter(gl.MAX_TEXTURE_SIZE);
+  if(src.width>mx){const c=document.createElement("canvas");c.width=mx;c.height=mx/2;c.getContext("2d").drawImage(src,0,0,mx,mx/2);src=c}
+  const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,src);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+  texReady=true;
+}
+
+/* ---------- Ansicht ---------- */
+let yaw=START[0],pitch=START[1],fov=95,P=600,Wv=0,Hv=0,dpr=1;
+let vy=0,vp=0,dragging=false,needs=true,anim=null,lastUser=performance.now(),started=false,sheetOpen=false;
+const FOVMIN=45,FOVMAX=105;
+function resize(){Wv=view.clientWidth;Hv=view.clientHeight;dpr=Math.min(2,window.devicePixelRatio||1);
+  gcv.width=Math.round(Wv*dpr);gcv.height=Math.round(Hv*dpr);needs=true}
+let basis=null;
+function apply(){
+  P=Math.max(Wv,Hv)/2/Math.tan(fov/2*DEG);
+  const cy=Math.cos(yaw*DEG),sy=Math.sin(yaw*DEG),cp=Math.cos(pitch*DEG),sp=Math.sin(pitch*DEG);
+  basis={r:[cy,0,-sy],u:[-sy*sp,cp,-cy*sp],f:[sy*cp,sp,cy*cp]};
+  if(gl&&texReady){
+    gl.viewport(0,0,gcv.width,gcv.height);
+    gl.uniformMatrix3fv(uR,false,new Float32Array([...basis.r,...basis.u,...basis.f]));
+    gl.uniform2f(uC,gcv.width/2,gcv.height/2);gl.uniform1f(uP,P*dpr);
+    gl.drawArrays(gl.TRIANGLES,0,3);
+  }
+}
+const dir=(lon,lat)=>[Math.sin(lon*DEG)*Math.cos(lat*DEG),Math.sin(lat*DEG),Math.cos(lon*DEG)*Math.cos(lat*DEG)];
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+function project(lon,lat){const d=dir(lon,lat),z=dot(d,basis.f);if(z<.08)return null;
+  return[Wv/2+dot(d,basis.r)/z*P,Hv/2-dot(d,basis.u)/z*P,z]}
+function lookAt(g,f,dur,cb){
+  let y1=g[0];while(y1-yaw>180)y1-=360;while(y1-yaw<-180)y1+=360;
+  anim={t0:performance.now(),dur:dur||1400,y0:yaw,y1,p0:pitch,p1:clamp(g[1],-80,80),f0:fov,f1:f||fov,cb};
+}
+
+/* ---------- Stationen im Bild ---------- */
+const layer=$("layer"),sign=$("sign");
+const seen=new Set();
+STATIONS.forEach(s=>{
+  const b=document.createElement("button");b.className="st";b.setAttribute("aria-label","Station "+s.n+": "+s.title);
+  b.innerHTML='<span class="ring">'+s.n+'</span><span class="name">'+s.title+'</span>';
+  b.addEventListener("click",e=>{e.stopPropagation();openStation(s)});
+  b.addEventListener("pointerdown",e=>e.stopPropagation());
+  layer.appendChild(b);s.el=b;
+});
+sign.addEventListener("click",e=>{e.stopPropagation();openStation(STATIONS[1])});
+sign.addEventListener("pointerdown",e=>e.stopPropagation());
+function place(){
+  for(const s of STATIONS){const c=project(s.at[0],s.at[1]);
+    if(!c||c[0]<-80||c[0]>Wv+80||c[1]<-80||c[1]>Hv+80){s.el.style.display="none";continue}
+    s.el.style.display="";s.el.style.transform="translate("+c[0].toFixed(1)+"px,"+c[1].toFixed(1)+"px)";}
+  const c=project(SIGN.at[0],SIGN.at[1]);
+  if(!c){sign.style.display="none";return}
+  // Größe so, dass das Schild im Bild etwa SIGN.h Grad hoch ist (wächst beim Heranzoomen mit)
+  const top=project(SIGN.at[0],SIGN.at[1]+SIGN.h);const hpx=top?Math.hypot(top[0]-c[0],top[1]-c[1]):0;
+  sign.style.display="";sign.style.transform="translate("+c[0].toFixed(1)+"px,"+c[1].toFixed(1)+"px) scale("+(hpx/170).toFixed(3)+")";
+}
+
+/* ---------- Bildschleife ---------- */
+function frame(t){
+  if(!dragging&&!anim&&(Math.abs(vy)>.01||Math.abs(vp)>.01)){yaw+=vy;pitch=clamp(pitch+vp,-85,85);vy*=.92;vp*=.92;needs=true}
+  if(anim){const k=Math.min(1,(t-anim.t0)/anim.dur),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+    yaw=anim.y0+(anim.y1-anim.y0)*e;pitch=anim.p0+(anim.p1-anim.p0)*e;fov=anim.f0+(anim.f1-anim.f0)*e;needs=true;
+    if(k>=1){const cb=anim.cb;anim=null;cb&&cb()}}
+  // sanftes Drehen, solange niemand etwas tut
+  if(started&&!dragging&&!anim&&!sheetOpen&&t-lastUser>9000){yaw+=.035;needs=true}
+  if(needs){apply();place();sound.steer(yaw);needs=false}
+  requestAnimationFrame(frame);
+}
+
+/* ---------- Steuerung ---------- */
+const pts=new Map();let lastX=0,lastY=0,pinch0=0,fov0=fov,downAt=null;
+const userMoved=()=>{lastUser=performance.now();anim=null;hideHint()};
+view.addEventListener("pointerdown",e=>{
+  view.setPointerCapture(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);
+  if(pts.size===2){const a=[...pts.values()];pinch0=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);fov0=fov}
+  dragging=true;view.classList.add("drag");lastX=e.clientX;lastY=e.clientY;vy=vp=0;userMoved();
+});
+view.addEventListener("pointermove",e=>{
+  if(!pts.has(e.pointerId))return;pts.set(e.pointerId,[e.clientX,e.clientY]);userMoved();
+  if(pts.size===2){const a=[...pts.values()],dd=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);if(pinch0>0){fov=clamp(fov0*pinch0/dd,FOVMIN,FOVMAX);needs=true}return}
+  const dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;
+  const k=Math.atan(1/P)*RAD;vy=-dx*k;vp=dy*k;yaw+=vy;pitch=clamp(pitch+vp,-85,85);needs=true;
+});
+const up=e=>{pts.delete(e.pointerId);if(!pts.size){dragging=false;view.classList.remove("drag")}else{const a=[...pts.values()][0];lastX=a[0];lastY=a[1]}if(pts.size<2)pinch0=0};
+view.addEventListener("pointerup",up);view.addEventListener("pointercancel",up);
+view.addEventListener("wheel",e=>{e.preventDefault();fov=clamp(fov*(1+e.deltaY*.0012),FOVMIN,FOVMAX);needs=true;userMoved()},{passive:false});
+view.addEventListener("keydown",e=>{
+  const m={ArrowLeft:[-5,0],ArrowRight:[5,0],ArrowUp:[0,5],ArrowDown:[0,-5]}[e.key];
+  if(m){e.preventDefault();yaw+=m[0];pitch=clamp(pitch+m[1],-85,85);needs=true;userMoved()}
+  if(e.key==="+"){fov=clamp(fov-5,FOVMIN,FOVMAX);needs=true}
+  if(e.key==="-"){fov=clamp(fov+5,FOVMIN,FOVMAX);needs=true}
+});
+window.addEventListener("resize",resize);
+
+/* ---------- Hinweise ---------- */
+const hint=$("hint");let hintT=0;
+function showHint(){hint.hidden=false;hint.style.opacity=1;clearTimeout(hintT);hintT=setTimeout(hideHint,7000)}
+function hideHint(){if(hint.hidden)return;hint.style.opacity=0;setTimeout(()=>hint.hidden=true,600)}
+const toastEl=$("toast");let toastT=0;
+function toast(html,ms){toastEl.innerHTML=html;toastEl.hidden=false;toastEl.style.opacity=1;clearTimeout(toastT);
+  toastT=setTimeout(()=>{toastEl.style.opacity=0;setTimeout(()=>toastEl.hidden=true,600)},ms||4000)}
+
+/* ---------- Station öffnen: Text + Sprachaufnahme ---------- */
+const sheet=$("sheet"),sPlay=$("sPlay"),sPlayLbl=$("sPlayLbl");
+const voice=new Audio();voice.preload="auto";
+let current=null;
+voice.addEventListener("play",()=>{sPlay.classList.add("playing");sPlayLbl.textContent="Hör zu …";sound.duck(true)});
+const stopped=()=>{sPlay.classList.remove("playing");sPlayLbl.textContent="Nochmal hören";sound.duck(false)};
+voice.addEventListener("pause",stopped);voice.addEventListener("ended",stopped);
+function speak(s){try{voice.pause();voice.src=s.audio;voice.currentTime=0;const p=voice.play();p&&p.catch(()=>stopped())}catch(e){stopped()}}
+function openStation(s){
+  userMoved();current=s;sheetOpen=true;clearTimeout(toastT);toastEl.hidden=true;
+  STATIONS.forEach(x=>x.el.classList.toggle("active",x===s));
+  $("sNum").textContent=s.n;$("sTitle").textContent=s.title;$("sText").textContent=s.text;
+  sheet.hidden=false;
+  // Station über das Textfeld rücken
+  lookAt(s.look||[s.at[0],s.at[1]-12],Math.min(fov,80),1100);
+  speak(s);
+  if(!seen.has(s.id)){seen.add(s.id);s.el.classList.add("seen");progress()}
+}
+function closeSheet(){
+  voice.pause();sheet.hidden=true;sheetOpen=false;lastUser=performance.now();
+  STATIONS.forEach(x=>x.el.classList.remove("active"));
+  if(seen.size===STATIONS.length&&!closeSheet.done){closeSheet.done=true;
+    toast("🎉 Super! Du hast alle 4 Stationen besucht.<br><span style=\"font-weight:400;color:#2b1d12\">Was ist in diesem Dorf anders als bei dir?</span>",9000)}
+  else if(seen.size<STATIONS.length){const left=STATIONS.length-seen.size;toast("Noch "+left+(left===1?" Station":" Stationen")+" – schau dich weiter um!",3000)}
+  view.focus({preventScroll:true});
+}
+sPlay.addEventListener("click",()=>{if(!current)return;if(!voice.paused)voice.pause();else speak(current)});
+$("sClose").addEventListener("click",closeSheet);
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&sheetOpen)closeSheet()});
+function progress(){const n=seen.size;$("count").textContent=n+" von 4 Stationen";
+  [...$("dots").children].forEach((d,i)=>d.classList.toggle("on",i<n))}
+
+/* ---------- Werkzeuge ---------- */
+const bSound=$("bSound"),bLabels=$("bLabels");
+bSound.addEventListener("click",()=>{const on=bSound.getAttribute("aria-pressed")!=="true";bSound.setAttribute("aria-pressed",on);sound.enable(on)});
+bLabels.addEventListener("click",()=>{const on=bLabels.getAttribute("aria-pressed")!=="true";bLabels.setAttribute("aria-pressed",on);layer.classList.toggle("nolabels",!on)});
+$("bFull").addEventListener("click",()=>{const d=document,el=d.documentElement;
+  if(d.fullscreenElement||d.webkitFullscreenElement)(d.exitFullscreen||d.webkitExitFullscreen).call(d);
+  else{const r=el.requestFullscreen||el.webkitRequestFullscreen;r&&r.call(el)}});
+
+/* ============================================================
+   Dorfgeräusche (live im Browser erzeugt, keine Dateien nötig).
+   Die Quellen sind im Bild verortet: Wer zum Brunnen schaut,
+   hört das Wasser lauter, an der Feuerstelle knistert es usw.
+   ============================================================ */
+const sound=(function(){
+  let ac=null,master=null,ambient=null,enabled=true,timers=[],positional={};
+  function noiseBuf(sec,kind){const ln=ac.sampleRate*sec,b=ac.createBuffer(1,ln,ac.sampleRate),d=b.getChannelData(0);let x=0;
+    for(let i=0;i<ln;i++){const w=Math.random()*2-1;if(kind==="brown"){x=(x+.02*w)/1.02;d[i]=x*3.5}else d[i]=w}return b}
+  function src(buf){const n=ac.createBufferSource();n.buffer=buf;n.loop=true;return n}
+  // eine Quelle im Raum: Lautstärke + Stereo abhängig von der Blickrichtung
+  function spot(name,lon,base){const g=ac.createGain();g.gain.value=0;const p=ac.createStereoPanner?ac.createStereoPanner():null;
+    if(p){g.connect(p);p.connect(ambient)}else g.connect(ambient);positional[name]={g,p,lon,base};return g}
+  function steer(y){if(!ac)return;const t=ac.currentTime;
+    for(const k in positional){const s=positional[k];let d=((s.lon-y)%360+540)%360-180;
+      const front=Math.max(0,Math.cos(d*DEG)),v=s.base*(.18+.82*Math.pow(front,1.6));
+      s.g.gain.setTargetAtTime(v,t,.25);if(s.p)s.p.pan.setTargetAtTime(clamp(Math.sin(d*DEG)*.85,-1,1),t,.25)}}
+  function every(fn,a,b){const loop=()=>{if(enabled)fn();timers.push(setTimeout(loop,rand(a,b)))};timers.push(setTimeout(loop,rand(a*.3,b*.5)))}
+  function init(){
+    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return false;
+    ac=new AC();master=ac.createGain();master.gain.value=0;master.connect(ac.destination);
+    ambient=ac.createGain();ambient.gain.value=1;ambient.connect(master);
+    const white=noiseBuf(3,"white"),brown=noiseBuf(4,"brown");
+    // Wind in den Blättern
+    {const n=src(brown),f=ac.createBiquadFilter();f.type="bandpass";f.frequency.value=700;f.Q.value=.35;const g=ac.createGain();g.gain.value=.22;
+     const l=ac.createOscillator();l.frequency.value=.06;const lg=ac.createGain();lg.gain.value=.14;l.connect(lg);lg.connect(g.gain);l.start();
+     n.connect(f);f.connect(g);g.connect(ambient);n.start()}
+    // Zikaden / Insekten (leise, flirrend)
+    {const n=src(white),f=ac.createBiquadFilter();f.type="bandpass";f.frequency.value=5200;f.Q.value=6;const g=ac.createGain();g.gain.value=0;
+     const am=ac.createOscillator();am.frequency.value=38;const ag=ac.createGain();ag.gain.value=.018;am.connect(ag);ag.connect(g.gain);am.start();
+     const sw=ac.createOscillator();sw.frequency.value=.11;const sg=ac.createGain();sg.gain.value=.012;sw.connect(sg);sg.connect(g.gain);sw.start();
+     n.connect(f);f.connect(g);g.connect(spot("wald",SRC.wald,1));n.start()}
+    // Wasser am Brunnen (plätschernder Strahl)
+    {const n=src(white),f=ac.createBiquadFilter();f.type="bandpass";f.frequency.value=1800;f.Q.value=.8;
+     const f2=ac.createBiquadFilter();f2.type="lowpass";f2.frequency.value=4200;const g=ac.createGain();g.gain.value=.05;
+     const fl=ac.createOscillator();fl.frequency.value=7;const fg=ac.createGain();fg.gain.value=.025;fl.connect(fg);fg.connect(g.gain);fl.start();
+     n.connect(f);f.connect(f2);f2.connect(g);g.connect(spot("brunnen",SRC.brunnen,1));n.start()}
+    // Feuer: Grundrauschen
+    {const n=src(brown),f=ac.createBiquadFilter();f.type="lowpass";f.frequency.value=420;const g=ac.createGain();g.gain.value=.16;
+     n.connect(f);f.connect(g);g.connect(spot("feuer",SRC.feuer,1));n.start()}
+    spot("huehner",SRC.huehner,1);spot("dorf",SRC.dorf,1);
+    // wiederkehrende Ereignisse
+    every(bird,1800,5200);
+    every(()=>{for(let i=0,n=3+(Math.random()*8|0);i<n;i++)crackle(ac.currentTime+rand(0,.9))},500,1300);
+    every(hen,3500,9000);
+    every(pump,6000,11000);
+    every(dove,14000,26000);
+    every(hammer,16000,30000);
+    return true;
+  }
+  const env=(g,t,peak,a,d)=>{g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.exponentialRampToValueAtTime(.0001,t+a+d)};
+  function bird(){const t0=ac.currentTime+.05,g=ac.createGain(),p=ac.createStereoPanner?ac.createStereoPanner():null;
+    if(p){p.pan.value=rand(-.9,.9);g.connect(p);p.connect(ambient)}else g.connect(ambient);
+    const type=Math.random(),n=2+(Math.random()*5|0),f0=rand(2200,3800);
+    for(let i=0;i<n;i++){const o=ac.createOscillator(),og=ac.createGain();o.type="sine";const ts=t0+i*rand(.1,.19);
+      if(type<.5){o.frequency.setValueAtTime(f0,ts);o.frequency.exponentialRampToValueAtTime(f0*rand(1.2,1.5),ts+.05);o.frequency.exponentialRampToValueAtTime(f0*.8,ts+.11)}
+      else{o.frequency.setValueAtTime(f0*1.3,ts);o.frequency.exponentialRampToValueAtTime(f0*.7,ts+.09)}
+      o.connect(og);og.connect(g);env(og,ts,.035,.015,.11);o.start(ts);o.stop(ts+.16)}
+    g.gain.value=1}
+  function dove(){const t0=ac.currentTime+.05,dst=positional.wald.g;
+    [0,.55,.85,1.4].forEach((dt,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.type="sine";const ts=t0+dt,f=i===1?560:500;
+      o.frequency.setValueAtTime(f*.92,ts);o.frequency.linearRampToValueAtTime(f,ts+.12);o.frequency.linearRampToValueAtTime(f*.9,ts+.32);
+      o.connect(g);g.connect(dst);env(g,ts,.05,.06,.3);o.start(ts);o.stop(ts+.45)})}
+  function crackle(ts){const n=ac.createBufferSource();n.buffer=crackle.b||(crackle.b=noiseBuf(.05,"white"));
+    const f=ac.createBiquadFilter();f.type="highpass";f.frequency.value=rand(1500,4000);const g=ac.createGain();
+    n.connect(f);f.connect(g);g.connect(positional.feuer.g);env(g,ts,rand(.15,.5),.001,rand(.01,.04));n.start(ts);n.stop(ts+.06)}
+  function hen(){const t0=ac.currentTime+.05,n=2+(Math.random()*4|0),dst=positional.huehner.g;
+    for(let i=0;i<n;i++){const last=i===n-1&&Math.random()<.5,ts=t0+i*rand(.16,.26),dur=last?.38:.09;
+      const o=ac.createOscillator();o.type="sawtooth";const f0=last?rand(520,620):rand(330,430);
+      o.frequency.setValueAtTime(f0,ts);if(last){o.frequency.linearRampToValueAtTime(f0*1.45,ts+.12);o.frequency.linearRampToValueAtTime(f0*1.1,ts+dur)}else o.frequency.exponentialRampToValueAtTime(f0*.75,ts+dur);
+      const bp=ac.createBiquadFilter();bp.type="bandpass";bp.frequency.value=1300;bp.Q.value=2.5;
+      const bp2=ac.createBiquadFilter();bp2.type="bandpass";bp2.frequency.value=2600;bp2.Q.value=3;
+      const g=ac.createGain();o.connect(bp);o.connect(bp2);bp.connect(g);bp2.connect(g);g.connect(dst);
+      env(g,ts,last?.11:.14,.008,dur);o.start(ts);o.stop(ts+dur+.05)}}
+  function pump(){const t0=ac.currentTime+.05,n=3+(Math.random()*3|0),dst=positional.brunnen.g;
+    for(let i=0;i<n;i++){const ts=t0+i*.75;
+      // Quietschen des Pumpenschwengels
+      const o=ac.createOscillator();o.type="triangle";const f=rand(950,1250);o.frequency.setValueAtTime(f,ts);o.frequency.linearRampToValueAtTime(f*1.18,ts+.22);
+      const g=ac.createGain();o.connect(g);g.connect(dst);env(g,ts,.025,.04,.22);o.start(ts);o.stop(ts+.3);
+      // Wasserschwall
+      const w=ac.createBufferSource();w.buffer=pump.b||(pump.b=noiseBuf(.6,"white"));const bp=ac.createBiquadFilter();bp.type="bandpass";bp.frequency.value=rand(900,1400);bp.Q.value=1.2;
+      const wg=ac.createGain();w.connect(bp);bp.connect(wg);wg.connect(dst);env(wg,ts+.3,.12,.05,.35);w.start(ts+.3);w.stop(ts+.8)}}
+  function hammer(){const t0=ac.currentTime+.1,dst=positional.dorf.g;
+    for(let i=0,n=3+(Math.random()*4|0);i<n;i++){const ts=t0+i*rand(.45,.6),o=ac.createOscillator();o.type="square";o.frequency.setValueAtTime(rand(180,220),ts);
+      const lp=ac.createBiquadFilter();lp.type="lowpass";lp.frequency.value=900;const g=ac.createGain();o.connect(lp);lp.connect(g);g.connect(dst);
+      env(g,ts,.06,.002,.08);o.start(ts);o.stop(ts+.12)}}
+  return{
+    start(){if(!ac&&!init())return;ac.resume&&ac.resume();if(enabled)master.gain.setTargetAtTime(.5,ac.currentTime,.8);steer(yaw)},
+    enable(on){enabled=on;if(!ac){if(on)this.start();return}master.gain.setTargetAtTime(on?.5:0,ac.currentTime,.3)},
+    duck(on){if(ac)ambient.gain.setTargetAtTime(on?.28:1,ac.currentTime,.25)},
+    steer
+  };
+})();
+
+/* ---------- Laden & Start ---------- */
+const bar=$("bar").firstElementChild,status=$("status"),go=$("go");
+resize();
+if(!gl){status.textContent="Dieser Browser kann das 360°-Bild leider nicht zeigen (WebGL fehlt).";return}
+const xhr=new XMLHttpRequest();xhr.open("GET",PANO);xhr.responseType="blob";
+xhr.onprogress=e=>{if(e.lengthComputable)bar.style.width=(e.loaded/e.total*100).toFixed(0)+"%"};
+xhr.onerror=()=>{status.textContent="Das Bild konnte nicht geladen werden."};
+xhr.onload=()=>{
+  if(xhr.status&&xhr.status>=400){status.textContent="Das Bild konnte nicht geladen werden.";return}
+  const img=new Image();img.onload=()=>{bar.style.width="100%";initGL(img);needs=true;status.textContent="Fertig!";go.disabled=false;go.focus()};
+  img.onerror=()=>{status.textContent="Das Bild konnte nicht geöffnet werden."};
+  img.src=URL.createObjectURL(xhr.response);
+};
+xhr.send();
+// Sprachaufnahmen vorladen
+STATIONS.forEach(s=>{const l=document.createElement("link");l.rel="preload";l.as="audio";l.href=s.audio;document.head.appendChild(l)});
+go.addEventListener("click",()=>{
+  $("start").hidden=true;started=true;
+  // Ton auf iPad/iPhone freischalten: Abspielen muss direkt aus einem Tippen kommen
+  try{voice.muted=true;voice.src=STATIONS[0].audio;const p=voice.play();p&&p.then(()=>{voice.pause();voice.muted=false}).catch(()=>{voice.muted=false})}catch(e){}
+  sound.start();view.focus({preventScroll:true});showHint();lastUser=performance.now();
+  setTimeout(()=>toast("Finde die 4 Stationen und tippe darauf!",4500),1200);
+});
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
