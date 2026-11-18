@@ -14,7 +14,7 @@ Tonaufnahme startet automatisch („Nochmal hören“ spielt sie erneut ab).
 | Nr. | Station | Text |
 |---|---|---|
 | 1 | Der Brunnen | Wasser gibt es in unserem Dorf nur am Brunnen. Kein Haus hat einen Wasserhahn. Mein Cousin in der Stadt hat zu Hause einen Wasserhahn. |
-| 2 | Die Straße ins Nachbardorf (mit Wegweiser) | Bei uns fahren keine Schulbusse. Und die Eltern haben keine Zeit, ihre Kinder zur Schule zu fahren. Sie müssen arbeiten. |
+| 2 | Der Weg ins Nachbardorf (beim Mädchen mit dem Kanister auf dem Kopf, Richtung Sonnenaufgang) | Bei uns fahren keine Schulbusse. Und die Eltern haben keine Zeit, ihre Kinder zur Schule zu fahren. Sie müssen arbeiten. |
 | 3 | Die Feuerstelle | Die meisten Familien kochen mit Holz und Feuer, weil Holz am günstigsten ist. Man kann es sogar selbst sammeln. |
 | 4 | Die Kakaobäume | Mit Kakaobohnen verdient man nicht viel Geld. Deshalb kann meine Familie keine Helfer bezahlen. |
 
@@ -38,8 +38,7 @@ Haben die Kinder alle vier Stationen besucht, erscheint die Frage „Was ist in 
 - Eine einzige Seite `index.html` ohne Bibliotheken; das Panorama wird mit WebGL dargestellt.
 - Panorama: `assets/dorf-360.webp` (1774 × 887, equirektangular). Das Bild ist am linken und
   rechten Rand nicht nahtlos; die Kante hinter den Kakaobäumen wird weich überblendet.
-- Der Wegweiser „Nachbardorf“ ist nicht im Foto, sondern wird als Schild in die Szene gesetzt.
 - Positionen der Stationen, des Wegweisers und der Geräuschquellen stehen oben im Skript
-  (`STATIONS`, `SIGN`, `SRC`) als [Länge, Breite] in Grad.
+  (`STATIONS`, `SRC`) als [Länge, Breite] in Grad.
 - Bedienung: Ziehen (Finger/Maus), Pfeiltasten, Zoomen mit zwei Fingern, dem Mausrad oder +/−.
 - Läuft auf iPad, Tablet, Handy und Computer.

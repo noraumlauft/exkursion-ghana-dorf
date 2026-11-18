@@ -31,9 +31,6 @@ body,button{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none
 @keyframes pulse{0%{transform:scale(.8);opacity:1}100%{transform:scale(1.45);opacity:0}}
 .nolabels .st .name{display:none}
 
-/* Wegweiser (steht im Bild an der Straße) */
-#sign{position:absolute;left:0;top:0;width:150px;height:170px;margin-left:-75px;margin-top:-170px;transform-origin:50% 100%;pointer-events:auto;cursor:pointer;will-change:transform;border:0;padding:0;background:none}
-#sign svg{width:100%;height:100%;display:block;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45))}
 
 /* Kopfzeile, Werkzeuge */
 .chip{position:absolute;background:rgba(255,248,236,.94);border-radius:16px;box-shadow:0 3px 14px rgba(0,0,0,.3)}
@@ -94,17 +91,6 @@ body,button{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none
   <canvas id="gl"></canvas>
   <div id="vignette"></div>
   <div id="layer">
-    <button id="sign" aria-label="Wegweiser: Nachbardorf">
-      <svg viewBox="0 0 150 170" aria-hidden="true">
-        <rect x="68" y="30" width="12" height="140" rx="3" fill="#6b4425"/>
-        <rect x="68" y="30" width="4" height="140" fill="#83562f"/>
-        <path d="M8 22h112l22 19-22 19H8z" fill="#c98b4a" stroke="#5a3519" stroke-width="3" stroke-linejoin="round"/>
-        <path d="M14 30h100M14 52h100" stroke="#b07436" stroke-width="2" opacity=".6"/>
-        <circle cx="74" cy="41" r="2.4" fill="#4a2a12"/>
-        <text x="64" y="47" text-anchor="middle" font-family="Baloo 2, Andika, sans-serif" font-weight="800" font-size="17" fill="#3a1f0c">Nachbardorf</text>
-        <text x="64" y="74" text-anchor="middle" font-family="Andika, sans-serif" font-weight="700" font-size="13" fill="#fff8ec" stroke="#3a1f0c" stroke-width="3" paint-order="stroke">5 km</text>
-      </svg>
-    </button>
   </div>
 </div>
 
@@ -152,14 +138,13 @@ const START=[-8,-4];
 const STATIONS=[
   {id:"brunnen",n:1,title:"Der Brunnen",at:[16.5,-14],audio:"assets/audio/station-1-brunnen.mp3",
    text:"Wasser gibt es in unserem Dorf nur am Brunnen. Kein Haus hat einen Wasserhahn. Mein Cousin in der Stadt hat zu Hause einen Wasserhahn."},
-  {id:"strasse",n:2,title:"Die Straße ins Nachbardorf",at:[110,-20],look:[110,-17],audio:"assets/audio/station-2-strasse.mp3",
+  {id:"strasse",n:2,title:"Der Weg ins Nachbardorf",at:[-9,-18],look:[-9,-14],audio:"assets/audio/station-2-strasse.mp3",
    text:"Bei uns fahren keine Schulbusse. Und die Eltern haben keine Zeit, ihre Kinder zur Schule zu fahren. Sie müssen arbeiten."},
   {id:"feuer",n:3,title:"Die Feuerstelle",at:[-41.5,-12],audio:"assets/audio/station-3-feuerstelle.mp3",
    text:"Die meisten Familien kochen mit Holz und Feuer, weil Holz am günstigsten ist. Man kann es sogar selbst sammeln."},
   {id:"kakao",n:4,title:"Die Kakaobäume",at:[156,2],audio:"assets/audio/station-4-kakaobaeume.mp3",
    text:"Mit Kakaobohnen verdient man nicht viel Geld. Deshalb kann meine Familie keine Helfer bezahlen."}
 ];
-const SIGN={at:[110,-15],h:20}; // Fußpunkt des Wegweisers, Höhe in Grad bei normalem Zoom
 // Geräuschquellen im Bild
 const SRC={huehner:-84,feuer:-41.5,brunnen:16.5,wald:150,dorf:-120};
 
@@ -227,7 +212,7 @@ function lookAt(g,f,dur,cb){
 }
 
 /* ---------- Stationen im Bild ---------- */
-const layer=$("layer"),sign=$("sign");
+const layer=$("layer");
 const seen=new Set();
 STATIONS.forEach(s=>{
   const b=document.createElement("button");b.className="st";b.setAttribute("aria-label","Station "+s.n+": "+s.title);
@@ -236,17 +221,10 @@ STATIONS.forEach(s=>{
   b.addEventListener("pointerdown",e=>e.stopPropagation());
   layer.appendChild(b);s.el=b;
 });
-sign.addEventListener("click",e=>{e.stopPropagation();openStation(STATIONS[1])});
-sign.addEventListener("pointerdown",e=>e.stopPropagation());
 function place(){
   for(const s of STATIONS){const c=project(s.at[0],s.at[1]);
     if(!c||c[0]<-80||c[0]>Wv+80||c[1]<-80||c[1]>Hv+80){s.el.style.display="none";continue}
     s.el.style.display="";s.el.style.transform="translate("+c[0].toFixed(1)+"px,"+c[1].toFixed(1)+"px)";}
-  const c=project(SIGN.at[0],SIGN.at[1]);
-  if(!c){sign.style.display="none";return}
-  // Größe so, dass das Schild im Bild etwa SIGN.h Grad hoch ist (wächst beim Heranzoomen mit)
-  const top=project(SIGN.at[0],SIGN.at[1]+SIGN.h);const hpx=top?Math.hypot(top[0]-c[0],top[1]-c[1]):0;
-  sign.style.display="";sign.style.transform="translate("+c[0].toFixed(1)+"px,"+c[1].toFixed(1)+"px) scale("+(hpx/170).toFixed(3)+")";
 }
 
 /* ---------- Bildschleife ---------- */
